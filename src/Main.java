@@ -1,8 +1,6 @@
-// Behnia Farahbod
+// Behnia Farahbod -- with correct Decoder.
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 import java.util.Scanner;
@@ -16,11 +14,16 @@ public class Main {
         // Encrypt
         if (1 == new Scanner(System.in).nextInt()) {
             BufferedWriter bw = new BufferedWriter(new FileWriter("src\\Huffman-Coded-Text.cmp", false));
-            String text = Files.readString(Paths.get("src\\Text.txt"));
-            charFrequency(text);
+            BufferedReader reader = new BufferedReader(new FileReader("src\\Text.txt"));
+            StringBuilder text = new StringBuilder();
+            do {
+                text.append(reader.readLine()).append("\n");
+            } while (reader.ready());
+            text.delete(text.length() - 1, text.length());
+            charFrequency(text.toString());
             try {
                 initPriQueueAndPrintTree();
-                replaceAndSave(bw, text);
+                replaceAndSave(bw, text.toString());
                 System.out.println("Compressing done!");
             } catch (Exception e) {
                 System.out.println("Nothing to compress!");
@@ -29,12 +32,19 @@ public class Main {
         // Decrypt
         else {
             BufferedWriter bw = new BufferedWriter(new FileWriter("src\\Huffman-Decoded-Text.txt", false));
-            String cmp = Files.readString(Paths.get("src\\Huffman-Coded-Text.cmp"));
-            String firstLine = new BufferedReader(new FileReader("src\\Huffman-Coded-Text.cmp")).readLine();
-            String[] firstLineArray = firstLine.split("भा");
+            BufferedReader reader = new BufferedReader(new FileReader("src\\Huffman-Coded-Text.cmp"));
+            StringBuilder lines = new StringBuilder();
+            do {
+                lines.append(reader.readLine()).append("\n");
+            } while (!lines.toString().contains("eof"));
+            lines.delete(lines.length() - 4, lines.length());
+            StringBuilder cmp = new StringBuilder();
+            do {
+                cmp.append(reader.readLine());
+            } while (reader.ready());// Read until the end
+            String[] firstLineArray = lines.toString().split("भा");
 
             // Read properties of characters
-
             for (String s : firstLineArray) {
                 Node n = new Node();
                 n.data = s.charAt(0) + "";
@@ -44,15 +54,29 @@ public class Main {
             try {
                 initPriQueueAndPrintTree();
 
-                cmp = cmp.substring(firstLine.length() + 2); // Everything except the first line - Correct until here
-                cmp = textToBinaryString(cmp);
+                char[] charArr = cmp.toString().toCharArray();
+                byte[] byteArr = new byte[charArr.length];
+                for (int i = 0; i < byteArr.length; ++i) {
+                    byteArr[i] = (byte) charArr[i];
+                }
+                cmp = new StringBuilder(bytesToBinaryString(byteArr));
+
                 StringBuilder finalText = new StringBuilder();
-                int i = 0;
-                while (i < cmp.length() - 1) {
+                StringBuilder finalBuilder = new StringBuilder();
+                int numOfBits = 0;
+                for (Node node : nodes) { // تعداد بیتی که باید بخونیم
+                    numOfBits += node.frequency * node.huffmanCode.length();
+                }
+
+                for (int i = 0; i < numOfBits; i++) {
+                    if (i > cmp.length())
+                        finalBuilder.append("0");
+                    else
+                        finalBuilder.append(cmp.charAt(i));
                     for (Node node : nodes) {
-                        if (i + node.huffmanCode.length() < cmp.length() && node.huffmanCode.equals(cmp.substring(i, i + node.huffmanCode.length()))) {
+                        if (finalBuilder.toString().equals(node.huffmanCode)) {
                             finalText.append(node.data);
-                            i = i + node.huffmanCode.length();
+                            finalBuilder.delete(0, finalBuilder.length()); // Empty the whole finalBuilder
                             break;
                         }
                     }
@@ -135,16 +159,19 @@ public class Main {
         }
     }
 
+    // For encoding
     static void replaceAndSave(BufferedWriter bw, String text) throws IOException {
         String binaryText = replaceWithBinary(text, nodes);
         System.out.println("\nThe binary form of the text :\n" + binaryText);
 
         // Save nodes' properties
+        StringBuilder sb = new StringBuilder();
         for (Node n : nodes) {
-            bw.write(n.data + n.frequency); // Used second method of saving
-            bw.write("भा"); // Separator
+            sb.append(n.data).append(n.frequency).append("भा"); // Used second method of saving
         }
-        bw.newLine();
+        sb.delete(sb.length() - 2, sb.length());
+        sb.append("eof\n");
+        bw.write(sb.toString());
 
         // Make the array of individual bits
         boolean[] binaryTextArray = new boolean[binaryText.length()];
@@ -155,7 +182,7 @@ public class Main {
         }
 
         int numberOfBytes = binaryTextArray.length / 8 + 1;
-        for (int i = 0; i < numberOfBytes; ++i) {
+        for (int i = 0; i < numberOfBytes; i++) {
             int temp = 0;
             for (int j = 0; j <= 7 && (i * 8) + j < binaryTextArray.length; j++) {
                 if (binaryTextArray[(i * 8) + j]) {
@@ -182,27 +209,31 @@ public class Main {
     }
 
     // For decoding
-    static String textToBinaryString(String text) {
-
-        StringBuilder binaryString = new StringBuilder();
-        char[] chars = text.toCharArray();
-        for (char c : chars) {
-            binaryString.append(charToBinaryForm(c));
+    static String bytesToBinaryString(byte[] bytes) {
+        StringBuilder result = new StringBuilder();
+        for (byte b : bytes) {
+            boolean[] temp = booleanArrayFromByte(b);
+            for (boolean bool : temp) {
+                if (bool) {
+                    result.append("1");
+                } else {
+                    result.append("0");
+                }
+            }
         }
-
-        return binaryString.toString();
+        return result.toString();
     }
 
-    private static String charToBinaryForm(char c) {
-        int charNumber = c;
-        StringBuilder sb = new StringBuilder();
-        for (int i = 7; i >= 0; i--) {
-            if (charNumber >= Math.pow(2, i)) {
-                charNumber -= Math.pow(2, i);
-                sb.append('1');
-            } else
-                sb.append('0');
-        }
-        return sb.toString();
+    static boolean[] booleanArrayFromByte(byte b) {
+        boolean[] array = new boolean[8];
+        array[0] = ((b & 0b1) != 0);
+        array[1] = ((b & 0b10) != 0);
+        array[2] = ((b & 0b100) != 0);
+        array[3] = ((b & 0b1000) != 0);
+        array[4] = ((b & 0b10000) != 0);
+        array[5] = ((b & 0b100000) != 0);
+        array[6] = ((b & 0b1000000) != 0);
+        array[7] = ((b & 0b10000000) != 0);
+        return array;
     }
 }
