@@ -157,7 +157,7 @@ public class Main {
         int numberOfBytes = binaryTextArray.length / 8 + 1;
         for (int i = 0; i < numberOfBytes; ++i) {
             int temp = 0;
-            for (int j = 7; j >= 0 && (i * 8) + j < binaryTextArray.length; j--) {
+            for (int j = 0; j <= 7 && (i * 8) + j < binaryTextArray.length; j++) {
                 if (binaryTextArray[(i * 8) + j]) {
                     temp += Math.pow(2, j);
                 }
