@@ -1,4 +1,5 @@
 // Behnia Farahbod
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -47,7 +48,7 @@ public class Main {
                 cmp = textToBinaryString(cmp);
                 StringBuilder finalText = new StringBuilder();
                 int i = 0;
-                while (!cmp.isEmpty()) {
+                while (i < cmp.length() - 1) {
                     for (Node node : nodes) {
                         if (i + node.huffmanCode.length() < cmp.length() && node.huffmanCode.equals(cmp.substring(i, i + node.huffmanCode.length()))) {
                             finalText.append(node.data);
@@ -56,17 +57,8 @@ public class Main {
                         }
                     }
                 }
+
                 bw.write(finalText.toString());
-            /*int i = 0;
-            while (i < cmp.length()) {
-                for (Node node : nodes) {
-                    if (cmp.substring(i, node.huffmanCode.length()).equals(node.huffmanCode)) {
-                        bw.write(node.data);
-                        i = i + node.huffmanCode.length();
-                        break;
-                    }
-                }
-            }*/
 
                 bw.close();
                 System.out.println("Decoding done !");
@@ -164,8 +156,8 @@ public class Main {
 
         int numberOfBytes = binaryTextArray.length / 8 + 1;
         for (int i = 0; i < numberOfBytes; ++i) {
-            byte temp = 0;
-            for (int j = 0; j < 8 && (i * 8) + j < binaryTextArray.length; j++) {
+            int temp = 0;
+            for (int j = 7; j >= 0 && (i * 8) + j < binaryTextArray.length; j--) {
                 if (binaryTextArray[(i * 8) + j]) {
                     temp += Math.pow(2, j);
                 }
