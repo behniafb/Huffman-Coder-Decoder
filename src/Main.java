@@ -68,7 +68,7 @@ public class Main {
                     numOfBits += node.frequency * node.huffmanCode.length();
                 }
 
-                for (int i = 0; i < numOfBits; i++) {
+                for (int i = 0; i < numOfBits; ++i) {
                     if (i > cmp.length())
                         finalBuilder.append("0");
                     else
@@ -107,7 +107,7 @@ public class Main {
 
     // Finds the frequency of characters in a string.
     static void charFrequency(String s) {
-        for (int i = 0; i < s.length(); i++) {
+        for (int i = 0; i < s.length(); ++i) {
             char c = s.charAt(i);
             Node temp = getNode(c);
             if (temp != null) temp.frequency++;
@@ -175,14 +175,14 @@ public class Main {
 
         // Make the array of individual bits
         boolean[] binaryTextArray = new boolean[binaryText.length()];
-        for (int i = 0; i < binaryTextArray.length; i++) {
+        for (int i = 0; i < binaryTextArray.length; ++i) {
             if (binaryText.charAt(i) == '1') {
                 binaryTextArray[i] = true;
             }
         }
 
         int numberOfBytes = binaryTextArray.length / 8 + 1;
-        for (int i = 0; i < numberOfBytes; i++) {
+        for (int i = 0; i < numberOfBytes; ++i) {
             int temp = 0;
             for (int j = 0; j <= 7 && (i * 8) + j < binaryTextArray.length; j++) {
                 if (binaryTextArray[(i * 8) + j]) {
@@ -197,7 +197,7 @@ public class Main {
 
     static private String replaceWithBinary(String text, ArrayList<Node> nodes) {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < text.length(); i++) {
+        for (int i = 0; i < text.length(); ++i) {
             for (Node node : nodes) {
                 if ((text.charAt(i) + "").equals(node.data)) {
                     sb.append(node.huffmanCode);
